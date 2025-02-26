@@ -1,0 +1,54 @@
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          
+      - name: Install main app dependencies
+        run: npm ci
+        
+      - name: Build main app
+        run: npm run build
+        
+      - name: Install quiz app dependencies
+        working-directory: quiz-app
+        run: npm ci
+        
+      - name: Build quiz app
+        working-directory: quiz-app
+        run: npm run build
+        
+      - name: Prepare deployment
+        run: |
+          mkdir -p ./dist/quiz-app
+          cp -r ./quiz-app/dist/* ./dist/quiz-app/
+        
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
+        
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: './dist'
+          
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
